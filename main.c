@@ -134,23 +134,8 @@ slice_t* slc_append_n(slice_t* to, int n, ...) {
     va_start(args, n);
     for (int i = 0; i < n; i++) {
         const slice_t* what = va_arg(args, slice_t*);
-        if (to->l + what->l <= to->c) {
-            memcpy(&((unsigned char*) to->p)[to->l * to->s], what->p, what->l * what->s);
-            ((__slice_t*) to)->l += what->l;
-            continue;
-        }
-        int cap = (to->l + what->l) * 2;
-        __slice_t* slice = __slice_fam_malloc(cap, to->s);
-        if (slice == NULL) return NULL;
-        memcpy(slice->data, to->p, to->l * to->s);
-        memcpy(&slice->data[to->l * to->s], what->p, what->l * what->s);
-        slice->l = to->l + what->l;
-        slice->c = cap;
-        slice->s = to->s;
-        slice->p = slice->data;
-        slice->is_final = false;
-        if (!to->is_final) slc_free(to);
-        to = (slice_t*) slice;
+        to = slc_append(to, what);
+        if (to == NULL) return NULL;
     }
     va_end(args);
     return to;
