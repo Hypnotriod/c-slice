@@ -35,11 +35,14 @@ typedef struct {
 
 #define SLC_DEFAULT_CAP 16
 
+#define arr_type_size(__ARR__) (sizeof((__ARR__)[0]))
+#define arr_size(__ARR__) (sizeof((__ARR__)) / arr_type_size(__ARR__))
+
 // Static slice_t initialization macro from array
 #define SLCS(__ARR__) { \
-    .l = (sizeof((__ARR__)) / sizeof((__ARR__)[0])), \
-    .c = (sizeof((__ARR__)) / sizeof((__ARR__)[0])), \
-    .s = sizeof((__ARR__)[0]), \
+    .l = arr_size(__ARR__), \
+    .c = arr_size(__ARR__), \
+    .s = arr_type_size(__ARR__), \
     .p = (__ARR__), \
     .is_static = true \
 }
@@ -193,7 +196,8 @@ int main() {
     const slice_t slice_ints = SLCS(ints);
     print_slice_ints(&slice_ints);
 
-    slice_t* slice_ints_new_from = slc_new_from(sizeof (int), ints, sizeof (ints) / sizeof (ints[0]), 10);
+    // slice_t* slice_ints_new_from = slc_new_from(arr_type_size(ints), ints, arr_size(ints), 10);
+    slice_t* slice_ints_new_from = slc_new_from(slice_ints.s, slice_ints.p, slice_ints.l, 10);
     print_slice_ints(slice_ints_new_from);
 
     slice_t* slice_ints_new = slc_new(sizeof (int), slice_ints.l, 2);
