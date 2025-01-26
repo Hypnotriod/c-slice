@@ -21,7 +21,7 @@ typedef struct {
     // Slice item size
     const int s;
     // Is static
-    const bool is_static;
+    const bool is_final;
 } slice_t;
 
 typedef struct {
@@ -29,7 +29,7 @@ typedef struct {
     int l;
     int c;
     int s;
-    bool is_static;
+    bool is_final;
     unsigned char data[];
 } __slice_t;
 
@@ -44,7 +44,7 @@ typedef struct {
     .c = arr_size(__ARR__), \
     .s = arr_type_size(__ARR__), \
     .p = (__ARR__), \
-    .is_static = true \
+    .is_final = true \
 }
 
 #define __slice_fam_malloc(__LEN__, __SIZE__) malloc(sizeof (__slice_t) + (__LEN__) * (__SIZE__))
@@ -72,7 +72,7 @@ slice_t* slc_new(int type_size, int len, int cap) {
     slice->c = len + cap;
     slice->s = type_size;
     slice->p = slice->data;
-    slice->is_static = false;
+    slice->is_final = false;
     memset(slice->data, 0, len * type_size);
     return (slice_t*) slice;
 }
@@ -85,9 +85,28 @@ slice_t* slc_new_from(int type_size, const void* data, int len, int cap) {
     slice->c = len + cap;
     slice->s = type_size;
     slice->p = slice->data;
-    slice->is_static = false;
+    slice->is_final = false;
     memcpy(slice->data, data, len * type_size);
     return (slice_t*) slice;
+}
+
+slice_t slc_slice(const slice_t* slice, int start, int len) {
+    if (start < -slice->l) start = 0;
+    else if (start < 0) start = slice->l + start;
+    if (len < 0 || start + len > slice->l) len = slice->l - start;
+    slice_t newslice = {
+        .p = slice->p + start * slice->s,
+        .l = len,
+        .c = len,
+        .s = slice->s,
+        .is_final = true,
+    };
+    return newslice;
+}
+
+slice_t* slc_slice_new(const slice_t* slice, int start, int len) {
+    slice_t newslice = slc_slice(slice, start, len);
+    return slc_new_from(newslice.s, newslice.p, newslice.l, newslice.l);
 }
 
 slice_t* slc_append(slice_t* to, const slice_t* what) {
@@ -105,8 +124,8 @@ slice_t* slc_append(slice_t* to, const slice_t* what) {
     slice->c = cap;
     slice->s = to->s;
     slice->p = slice->data;
-    slice->is_static = false;
-    if (!to->is_static) slc_free(to);
+    slice->is_final = false;
+    if (!to->is_final) slc_free(to);
     return (slice_t*) slice;
 }
 
@@ -129,8 +148,8 @@ slice_t* slc_append_n(slice_t* to, int n, ...) {
         slice->c = cap;
         slice->s = to->s;
         slice->p = slice->data;
-        slice->is_static = false;
-        if (!to->is_static) slc_free(to);
+        slice->is_final = false;
+        if (!to->is_final) slc_free(to);
         to = (slice_t*) slice;
     }
     va_end(args);
@@ -150,23 +169,9 @@ slice_t* slc_extend(slice_t* slice, int count) {
     newslc->c = cap;
     newslc->s = slice->s;
     newslc->p = newslc->data;
-    newslc->is_static = false;
-    if (!slice->is_static) slc_free(slice);
+    newslc->is_final = false;
+    if (!slice->is_final) slc_free(slice);
     return (slice_t*) newslc;
-}
-
-slice_t slc_slice(const slice_t* slice, int start, int len) {
-    if (start < -slice->l) start = 0;
-    else if (start < 0) start = slice->l + start;
-    if (len < 0 || start + len > slice->l) len = slice->l - start;
-    slice_t newslice = {
-        .p = slice->p + start * slice->s,
-        .l = len,
-        .c = len,
-        .s = slice->s,
-        .is_static = true,
-    };
-    return newslice;
 }
 
 #define slc_add(__SLICE_T__, __TYPE__, __ITEM__) { \
@@ -221,6 +226,10 @@ int main() {
 
     slice_ints_new = slc_append_n(slice_ints_new, 2, &slice_of_slice1, &slice_of_slice2);
     print_slice_ints(slice_ints_new);
+
+    slc_free(slice_ints_new_from);
+    slice_ints_new_from = slc_slice_new(slice_ints_new, 3, 5);
+    print_slice_ints(slice_ints_new_from);
 
     slc_free(slice_ints_new_from);
     slc_free(slice_ints_new);
