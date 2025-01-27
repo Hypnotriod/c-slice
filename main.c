@@ -71,7 +71,7 @@ typedef struct {
 #define slc_free(__SLICE_T__) if (!(__SLICE_T__)->is_final) { free((__SLICE_T__)); (__SLICE_T__) = NULL; }
 
 /**
- * Create new slice_t* with given length and additional capacity
+ * Create new slice_t* with the given length and additional capacity
  * All The allocated memory will have zero values
  * @param type_size - type size in bytes
  * @param len - number of empty elements
@@ -93,7 +93,7 @@ slice_t* slc_new(int type_size, int len, int cap) {
 }
 
 /**
- * Create new slice_t* from data pointer with given length and additional capacity
+ * Create new slice_t* from the data pointer with the given length and additional capacity
  * Copy all the data to the slice_t*
  * Fill rest with zero
  * @param type_size - type size in bytes
@@ -117,7 +117,7 @@ slice_t* slc_new_from(int type_size, const void* data, int len, int cap) {
 }
 
 /**
- * Create new slice_t* copy from slice_t* with additional capacity
+ * Create new slice_t* copy from slice_t* with an additional capacity
  * @param slice - slice_t* to copy from
  * @param cap - additional capacity
  * @return new slice_t*
