@@ -39,7 +39,7 @@ typedef struct {
 #define arr_size(__ARR__) (sizeof((__ARR__)) / arr_type_size(__ARR__))
 
 // Static slice_t initialization macro from array
-#define SLCS(__ARR__) { \
+#define slc_from_arr(__ARR__) { \
     .l = arr_size(__ARR__), \
     .c = arr_size(__ARR__), \
     .s = arr_type_size(__ARR__), \
@@ -139,7 +139,7 @@ slice_t* slc_slice_new(const slice_t* slice, int start, int len) {
     return slc_new_from(newslice.s, newslice.p, newslice.l, newslice.l);
 }
 
-slice_t* slc_append(slice_t* to, const slice_t* what) {
+slice_t* slc_append_slice(slice_t* to, const slice_t* what) {
     if (to->l + what->l <= to->c) {
         memcpy(((void*) to->p + to->l * to->s), what->p, what->l * what->s);
         ((__slice_fam_t*) to)->l += what->l;
@@ -159,12 +159,12 @@ slice_t* slc_append(slice_t* to, const slice_t* what) {
     return (slice_t*) slice;
 }
 
-slice_t* slc_append_n(slice_t* to, int n, ...) {
+slice_t* slc_append_slice_n(slice_t* to, int n, ...) {
     va_list args;
     va_start(args, n);
     for (int i = 0; i < n; i++) {
         const slice_t* what = va_arg(args, const slice_t*);
-        to = slc_append(to, what);
+        to = slc_append_slice(to, what);
         if (to == NULL) return NULL;
     }
     va_end(args);
@@ -176,7 +176,7 @@ slice_t* slc_extend(slice_t* slice, int count) {
         ((__slice_fam_t*) slice)->l += count;
         return slice;
     }
-    int cap = slice->l * 2;
+    int cap = (slice->l + count) * 2;
     __slice_fam_t* newslc = __slice_fam_malloc(cap, slice->s);
     if (slice == NULL) return NULL;
     memcpy(newslc->data, slice->p, slice->l * slice->s);
@@ -197,7 +197,7 @@ slice_t* slc_shrink(slice_t* slice, int count) {
     return slice;
 }
 
-#define slc_push(__SLICE_T__, __TYPE__, __ITEM__) { \
+#define slc_append(__SLICE_T__, __TYPE__, __ITEM__) { \
     (__SLICE_T__) = slc_extend((__SLICE_T__), 1); \
     slcilast(__SLICE_T__, __TYPE__) = (__ITEM__); \
 }
@@ -217,7 +217,8 @@ void slc_extract_all(slice_t* slice, void* buff) {
 // *****************************
 
 void print_slice_info(const slice_t* slice) {
-    printf("len=%i, cap=%i, size=%i\r\n", slice->l, slice->c, slice->s);
+    printf("len=%i, cap=%i, size=%i, final=%s: ",
+            slice->l, slice->c, slice->s, slice->is_final ? "true" : "false");
 }
 
 void print_slice_ints(const slice_t* slice) {
@@ -231,7 +232,7 @@ void print_slice_ints(const slice_t* slice) {
 int main() {
     int ints[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-    const slice_t slice_ints = SLCS(ints);
+    const slice_t slice_ints = slc_from_arr(ints);
     print_slice_ints(&slice_ints);
 
     const slice_t slice_of_arr = slc_slice_arr(ints, 3, 5);
@@ -252,10 +253,10 @@ int main() {
     }
     print_slice_ints(slice_ints_new);
 
-    slice_ints_new = slc_append(slice_ints_new, &slice_ints);
+    slice_ints_new = slc_append_slice(slice_ints_new, &slice_ints);
     print_slice_ints(slice_ints_new);
 
-    slc_push(slice_ints_new, int, 55);
+    slc_append(slice_ints_new, int, 55);
     print_slice_ints(slice_ints_new);
 
     const slice_t slice_of_slice1 = slc_slice(slice_ints_new, 5, -1);
@@ -264,7 +265,7 @@ int main() {
     const slice_t slice_of_slice2 = slc_slice(slice_ints_new, -8, -1);
     print_slice_ints(&slice_of_slice2);
 
-    slice_ints_new = slc_append_n(slice_ints_new, 2, &slice_of_slice1, &slice_of_slice2);
+    slice_ints_new = slc_append_slice_n(slice_ints_new, 2, &slice_of_slice1, &slice_of_slice2);
     print_slice_ints(slice_ints_new);
 
     slc_free(slice_ints_new_from);
