@@ -68,7 +68,7 @@ typedef struct {
 #define slcilast(__SLICE_T__, __TYPE__) (*(__TYPE__**)((__SLICE_T__)))[(__SLICE_T__)->l - 1]
 
 // Dynamic slice_t* helper macro to free and set a null pointer
-#define slc_free(__SLICE_T__) if (!(__SLICE_T__)->is_final) { free((__SLICE_T__)); (__SLICE_T__) = NULL; }
+#define slc_free(__SLICE_T__) { free((__SLICE_T__)); (__SLICE_T__) = NULL; }
 
 /**
  * Create new slice_t* with the given length and additional capacity
@@ -235,7 +235,7 @@ slice_t* slc_append_slice(slice_t* to, const slice_t* what) {
     slice->s = to->s;
     slice->p = slice->data;
     slice->is_final = false;
-    slc_free(to);
+    if (!slice->is_final) slc_free(to);
     return (slice_t*) slice;
 }
 
@@ -282,7 +282,7 @@ slice_t* slc_extend(slice_t* slice, int count) {
     newslc->s = slice->s;
     newslc->p = newslc->data;
     newslc->is_final = false;
-    slc_free(slice);
+    if (!slice->is_final) slc_free(slice);
     return (slice_t*) newslc;
 }
 
