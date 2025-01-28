@@ -241,7 +241,7 @@ slice_t* slc_append_slice(slice_t* to, const slice_t* what) {
     slice->s = to->s;
     slice->p = slice->data;
     slice->is_final = false;
-    if (!slice->is_final) slc_free(to);
+    if (!to->is_final) slc_free(to);
     return (slice_t*) slice;
 }
 
@@ -295,7 +295,7 @@ slice_t* slc_append_arr(slice_t* to, const void* what, int len) {
     slice->s = to->s;
     slice->p = slice->data;
     slice->is_final = false;
-    if (!slice->is_final) slc_free(to);
+    if (!to->is_final) slc_free(to);
     return (slice_t*) slice;
 }
 
