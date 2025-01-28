@@ -72,7 +72,7 @@ typedef struct {
 
 /**
  * Create new slice_t* with the given length and additional capacity
- * All The allocated memory will have zero values
+ * All the allocated memory will have zero values
  * @param type_size - type size in bytes
  * @param len - number of empty elements
  * @param cap - additional capacity
@@ -94,7 +94,7 @@ slice_t* slc_new(int type_size, int len, int cap) {
 
 /**
  * Create new slice_t* from the data pointer with the given length and additional capacity
- * Copy all the data to the slice_t*
+ * Will copy all the data to the new slice_t*
  * Fill rest with zero
  * @param type_size - type size in bytes
  * @param data - data pointer
@@ -118,6 +118,8 @@ slice_t* slc_new_from(int type_size, const void* data, int len, int cap) {
 
 /**
  * Create new slice_t* copy from slice_t* with an additional capacity
+ * Will copy all the data to the new slice_t*
+ * Fill rest with zero
  * @param slice - slice_t* to copy from
  * @param cap - additional capacity
  * @return new slice_t*
@@ -128,6 +130,8 @@ slice_t* slc_new_from_slice(const slice_t* slice, int cap) {
 
 /**
  * Macro helper to create a new slice_t* with the copy of the given array and additional capacity
+ * Will copy all the data to the new slice_t*
+ * Fill rest with zero
  * Do not use with the array pointer!
  * @param __ARR__ - array symbol
  * @param __CAP__ - additional capacity
@@ -212,7 +216,9 @@ slice_t* slc_slice_new(const slice_t* slice, int start, int len) {
 
 /**
  * Append slice_t* 'what' to the slice_t* 'to'
+ * Will copy all the data of the slice_t* 'what' to the slice_t* 'to'
  * Will reallocate the memory and free the old pointer if growth occurs
+ * Fill rest with zero
  * Always reassign the slice_t* result to avoid use after free
  * @param to - slice_t* to append to
  * @param what - slice_t* to append
@@ -241,7 +247,9 @@ slice_t* slc_append_slice(slice_t* to, const slice_t* what) {
 
 /**
  * Append n of slice_t* slices to the slice_t* 'to'
+ * Will copy all the data of the given slice_t* slices to the slice_t* 'to'
  * Will reallocate the memory and free the old pointer if growth occurs
+ * Fill rest with zero
  * Always reassign the slice_t* result to avoid use after free
  * @param to - slice_t* to append to
  * @param ... - slice_t* to append
@@ -257,6 +265,38 @@ slice_t* slc_append_slice_n(slice_t* to, int n, ...) {
     }
     va_end(args);
     return to;
+}
+
+/**
+ * Append void* array 'what' to the slice_t* 'to'
+ * Will copy all the data of the given slice_t* slices to the slice_t* 'to'
+ * Will reallocate the memory and free the old pointer if growth occurs
+ * Fill rest with zero
+ * Always reassign the slice_t* result to avoid use after free
+ * @param to - slice_t* to append to
+ * @param what - void* array to append
+ * @param len - void* array length
+ * @return slice_t* or new slice_t*
+ */
+slice_t* slc_append_arr(slice_t* to, const void* what, int len) {
+    if (to->l + len <= to->c) {
+        memcpy(((void*) to->p + to->l * to->s), what, len * to->s);
+        ((__slice_fam_t*) to)->l += len;
+        return to;
+    }
+    int cap = (to->l + len) * 2;
+    __slice_fam_t* slice = __slice_fam_malloc(cap, to->s);
+    if (slice == NULL) return NULL;
+    memcpy(slice->data, to->p, to->l * to->s);
+    memcpy((void*) slice->data + to->l * to->s, what, len * to->s);
+    memset((void*) slice->data + (to->l + len) * to->s, 0, cap / 2 * to->s);
+    slice->l = to->l + len;
+    slice->c = cap;
+    slice->s = to->s;
+    slice->p = slice->data;
+    slice->is_final = false;
+    if (!slice->is_final) slc_free(to);
+    return (slice_t*) slice;
 }
 
 /**
@@ -320,6 +360,7 @@ slice_t* slc_concat_n(int n, ...) {
 /**
  * Extend the slice_t* length
  * Will reallocate the memory and free the old pointer if growth occurs
+ * Fill rest with zero
  * Always reassign the slice_t* result to avoid use after free
  * @param slice - slice_t* to extend
  * @param count - items count
@@ -350,7 +391,7 @@ slice_t* slc_extend(slice_t* slice, int count) {
  * @param count - items count
  */
 void slc_shrink(slice_t* slice, int count) {
-    if (count < 0) return slice;
+    if (count < 0) return;
     int len = slice->l - count;
     if (len < 0) len = 0;
     ((__slice_fam_t*) slice)->l = len;
@@ -370,14 +411,14 @@ void slc_shrink(slice_t* slice, int count) {
 }
 
 /**
- * Extract number of elements of the slice_t* to the given buffer
+ * Extract the number of elements of the slice_t* to the given buffer
  * @param slice - slice_t* to extract data from
  * @param buff - void* to extract data to
  * @param len - number of items to extract
  */
-void slc_extract(slice_t* slice, void* buff, int len) {
-    if (len <= 0) return;
-    if (len > slice->l) len = slice->l;
+void slc_extract(slice_t* slice, void* buff, int count) {
+    if (count <= 0) return;
+    if (count > slice->l) count = slice->l;
     memcpy(buff, slice->p, slice->l * slice->s);
 }
 
@@ -417,6 +458,9 @@ int main() {
     print_slice_ints(&slice_of_arr);
 
     slice_t* slice_ints_new_from = slc_new_from_arr(ints, 10);
+    print_slice_ints(slice_ints_new_from);
+
+    slice_ints_new_from = slc_append_arr(slice_ints_new_from, ints, __arr_size(ints));
     print_slice_ints(slice_ints_new_from);
 
     slc_free(slice_ints_new_from);
