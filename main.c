@@ -260,6 +260,64 @@ slice_t* slc_append_slice_n(slice_t* to, int n, ...) {
 }
 
 /**
+ * Join two slice_t* slices into a new slice_t*
+ * @param slice1 - first slice_t* to join
+ * @param slice2 - second slice_t* to join
+ * @return new slice_t*
+ */
+slice_t* slc_concat(const slice_t* slice1, const slice_t* slice2) {
+    int cap = (slice1->l + slice2->l) * 2;
+    __slice_fam_t* slice = __slice_fam_malloc(cap, slice1->s);
+    if (slice == NULL) return NULL;
+    memcpy(slice->data, slice1->p, slice1->l * slice1->s);
+    memcpy((void*) slice->data + slice1->l * slice1->s, slice2->p, slice2->l * slice2->s);
+    memset((void*) slice->data + (slice1->l + slice2->l) * slice1->s, 0, cap / 2 * slice1->s);
+    slice->l = slice1->l + slice2->l;
+    slice->c = cap;
+    slice->s = slice1->s;
+    slice->p = slice->data;
+    slice->is_final = false;
+    return (slice_t*) slice;
+}
+
+/**
+ * Join n slice_t* slices into a new slice_t*
+ * @param n - number of slice_t* to join
+ * @param ... - slice_t*
+ * @return new slice_t*
+ */
+slice_t* slc_concat_n(int n, ...) {
+    int len = 0;
+    int type_size = 1;
+    va_list args;
+    va_start(args, n);
+    for (int i = 0; i < n; i++) {
+        const slice_t* slc = va_arg(args, const slice_t*);
+        len += slc->l;
+        type_size = slc->s;
+    }
+    va_end(args);
+    int cap = len * 2;
+    __slice_fam_t* slice = __slice_fam_malloc(cap, type_size);
+    if (slice == NULL) return NULL;
+    va_start(args, n);
+    void* data = slice->data;
+    for (int i = 0; i < n; i++) {
+        const slice_t* slc = va_arg(args, const slice_t*);
+        memcpy(data, slc->p, slc->l * slc->s);
+        data += slc->l * slc->s;
+    }
+    memset(data, 0, cap / 2 * type_size);
+    va_end(args);
+    slice->l = len;
+    slice->c = cap;
+    slice->s = type_size;
+    slice->p = slice->data;
+    slice->is_final = false;
+    return (slice_t*) slice;
+}
+
+/**
  * Extend the slice_t* length
  * Will reallocate the memory and free the old pointer if growth occurs
  * Always reassign the slice_t* result to avoid use after free
@@ -387,15 +445,31 @@ int main() {
     const slice_t slice_of_slice2 = slc_slice(slice_ints_new, -8, -1);
     print_slice_ints(&slice_of_slice2);
 
-    slice_ints_new = slc_append_slice_n(slice_ints_new, 2, &slice_of_slice1, &slice_of_slice2);
-    print_slice_ints(slice_ints_new);
+    slc_free(slice_ints_new_from);
+    slice_ints_new_from = slc_new(sizeof (int), 0, 12);
+    slice_ints_new_from = slc_append_slice_n(slice_ints_new_from, 2, &slice_of_slice1, &slice_of_slice2);
+    print_slice_ints(slice_ints_new_from);
 
     slc_free(slice_ints_new_from);
     slice_ints_new_from = slc_slice_new(slice_ints_new, 3, 5);
     print_slice_ints(slice_ints_new_from);
 
+    slice_t* slice_concatenated = slc_concat(&slice_of_slice1, &slice_of_slice2);
+    slc_append(slice_concatenated, int, 44);
+    slc_append(slice_concatenated, int, 22);
+    slc_append(slice_concatenated, int, 11);
+    print_slice_ints(slice_concatenated);
+
+    slc_free(slice_concatenated);
+    slice_concatenated = slc_concat_n(3, &slice_of_slice1, slice_ints_new_from, &slice_of_slice2);
+    slc_append(slice_concatenated, int, 33);
+    slc_append(slice_concatenated, int, 66);
+    slc_append(slice_concatenated, int, 77);
+    print_slice_ints(slice_concatenated);
+
     slc_free(slice_ints_new_from);
     slc_free(slice_ints_new);
+    slc_free(slice_concatenated);
 
     return (EXIT_SUCCESS);
 }
