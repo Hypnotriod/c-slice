@@ -348,14 +348,12 @@ slice_t* slc_extend(slice_t* slice, int count) {
  * Shrink the slice_t* length
  * @param slice - slice_t* to shrink
  * @param count - items count
- * @return slice_t*
  */
-slice_t* slc_shrink(slice_t* slice, int count) {
+void slc_shrink(slice_t* slice, int count) {
     if (count < 0) return slice;
     int len = slice->l - count;
     if (len < 0) len = 0;
     ((__slice_fam_t*) slice)->l = len;
-    return slice;
 }
 
 /**
