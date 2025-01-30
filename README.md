@@ -36,6 +36,8 @@ print_slice_ints("slice_t* after data copy with sign inversion", slice_ints_new)
 slice_ints_new = slc_append_slice(slice_ints_new, &slice_ints);
 print_slice_ints("slice_t* after slice append", slice_ints_new);
 
+// slice_ints_new = slc_extend(slice_ints_new, 1);
+// slcilast(slice_ints_new, int) = 55;
 slc_append(slice_ints_new, int, 55);
 print_slice_ints("slice_t* after append 55", slice_ints_new);
 
