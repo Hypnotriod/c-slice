@@ -43,7 +43,7 @@ typedef struct {
 #define __arr_type_size(__ARR__) (sizeof((__ARR__)[0]))
 #define __arr_size(__ARR__) (sizeof((__ARR__)) / __arr_type_size(__ARR__))
 
-// Static slice_t initialization macro from array
+// Final slice_t initialization macro from array
 #define slc_from_arr(__ARR__) { \
     .l = __arr_size(__ARR__), \
     .c = __arr_size(__ARR__), \
@@ -152,11 +152,11 @@ slice_t* slc_new_from_slice(const slice_t* slice, int cap) {
  * @param len - number of items to slice. Any negative value means up to the remaining length
  * @return final slice_t
  */
-slice_t slc_slice(const slice_t* slice, int start, int len) {
+const slice_t slc_slice(const slice_t* slice, int start, int len) {
     if (start < -slice->l) start = 0;
     else if (start < 0) start = slice->l + start;
     if (len < 0 || start + len > slice->l) len = slice->l - start;
-    slice_t newslice = {
+    const slice_t newslice = {
         .p = slice->p + start * slice->s,
         .l = len,
         .c = len,
@@ -175,8 +175,8 @@ slice_t slc_slice(const slice_t* slice, int start, int len) {
  * @param len - number of items to slice
  * @return final slice_t
  */
-slice_t slc_slice_of(int type_size, const void* data, int start, int len) {
-    slice_t newslice = {
+const slice_t slc_slice_of(int type_size, const void* data, int start, int len) {
+    const slice_t newslice = {
         .p = (void*) data + start * type_size,
         .l = len,
         .c = len,
@@ -210,7 +210,7 @@ slice_t slc_slice_of(int type_size, const void* data, int start, int len) {
  * @return new slice_t*
  */
 slice_t* slc_slice_new(const slice_t* slice, int start, int len) {
-    slice_t newslice = slc_slice(slice, start, len);
+    const slice_t newslice = slc_slice(slice, start, len);
     return slc_new_from(newslice.s, newslice.p, newslice.l, newslice.l);
 }
 
@@ -452,10 +452,10 @@ int main() {
     int ints[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     const slice_t slice_ints = slc_from_arr(ints);
-    print_slice_ints("Static slice_t from array", &slice_ints);
+    print_slice_ints("Final slice_t from array", &slice_ints);
 
     const slice_t slice_of_arr = slc_slice_arr(ints, 3, 5);
-    print_slice_ints("Static slice_t from array slice from 3 with length 5", &slice_of_arr);
+    print_slice_ints("Final slice_t from array slice from 3 with length 5", &slice_of_arr);
 
     slice_t* slice_ints_new_from = slc_new_from_arr(ints, 10);
     print_slice_ints("New slice_t* from array slice with extra cap 10", slice_ints_new_from);
@@ -487,10 +487,10 @@ int main() {
     print_slice_ints("slice_t* after append 55", slice_ints_new);
 
     const slice_t slice_of_slice1 = slc_slice(slice_ints_new, 5, -1);
-    print_slice_ints("Static slice_t from slice_t* from 5 to the full length", &slice_of_slice1);
+    print_slice_ints("Final slice_t from slice_t* from 5 to the full length", &slice_of_slice1);
 
     const slice_t slice_of_slice2 = slc_slice(slice_ints_new, -8, -1);
-    print_slice_ints("Static slice_t from slice_t* from -8 to the full length", &slice_of_slice2);
+    print_slice_ints("Final slice_t from slice_t* from -8 to the full length", &slice_of_slice2);
 
     slc_free(slice_ints_new_from);
     slice_ints_new_from = slc_new(sizeof (int), 0, 12);

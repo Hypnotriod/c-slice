@@ -7,10 +7,10 @@ Some [examples](./main.c) so far:
 int ints[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 const slice_t slice_ints = slc_from_arr(ints);
-print_slice_ints("Static slice_t from array", &slice_ints);
+print_slice_ints("Final slice_t from array", &slice_ints);
 
 const slice_t slice_of_arr = slc_slice_arr(ints, 3, 5);
-print_slice_ints("Static slice_t from array slice from 3 with length 5", &slice_of_arr);
+print_slice_ints("Final slice_t from array slice from 3 with length 5", &slice_of_arr);
 
 slice_t* slice_ints_new_from = slc_new_from_arr(ints, 10);
 print_slice_ints("New slice_t* from array slice with extra cap 10", slice_ints_new_from);
@@ -42,10 +42,10 @@ slc_append(slice_ints_new, int, 55);
 print_slice_ints("slice_t* after append 55", slice_ints_new);
 
 const slice_t slice_of_slice1 = slc_slice(slice_ints_new, 5, -1);
-print_slice_ints("Static slice_t from slice_t* from 5 to the full length", &slice_of_slice1);
+print_slice_ints("Final slice_t from slice_t* from 5 to the full length", &slice_of_slice1);
 
 const slice_t slice_of_slice2 = slc_slice(slice_ints_new, -8, -1);
-print_slice_ints("Static slice_t from slice_t* from -8 to the full length", &slice_of_slice2);
+print_slice_ints("Final slice_t from slice_t* from -8 to the full length", &slice_of_slice2);
 
 slc_free(slice_ints_new_from);
 slice_ints_new_from = slc_new(sizeof (int), 0, 12);
