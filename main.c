@@ -56,16 +56,16 @@ typedef struct {
 #define __slice_fam_malloc(__LEN__, __SIZE__) malloc(sizeof (__slice_fam_t) + (__LEN__) * (__SIZE__))
 
 // Unwrap slice_t* into type*
-#define SLCU(__SLICE_T__, __TYPE__) (*(__TYPE__**)((__SLICE_T__)))
+#define slc_unwrap(__SLICE_T__, __TYPE__) (*(__TYPE__**)((__SLICE_T__)))
 
 // Unwrap slice_t* and get the typed item by index
-#define slci(__SLICE_T__, __TYPE__, __INDEX__) (*(__TYPE__**)((__SLICE_T__)))[(__INDEX__)]
+#define slc_at(__SLICE_T__, __TYPE__, __INDEX__) (*(__TYPE__**)((__SLICE_T__)))[(__INDEX__)]
 
 // Unwrap slice_t* and get a pointer to the typed item by index
-#define slciptr(__SLICE_T__, __TYPE__, __INDEX__) &(*(__TYPE__**)((__SLICE_T__)))[(__INDEX__)]
+#define slc_at_ptr(__SLICE_T__, __TYPE__, __INDEX__) &(*(__TYPE__**)((__SLICE_T__)))[(__INDEX__)]
 
 // Unwrap slice_t* and get the typed last item
-#define slcilast(__SLICE_T__, __TYPE__) (*(__TYPE__**)((__SLICE_T__)))[(__SLICE_T__)->l - 1]
+#define slc_last(__SLICE_T__, __TYPE__) (*(__TYPE__**)((__SLICE_T__)))[(__SLICE_T__)->l - 1]
 
 // Dynamic slice_t* helper macro to free and set a null pointer
 #define slc_free(__SLICE_T__) { free((__SLICE_T__)); (__SLICE_T__) = NULL; }
@@ -407,7 +407,7 @@ void slc_shrink(slice_t* slice, int count) {
  */
 #define slc_append(__SLICE_T__, __TYPE__, __ITEM__) { \
     (__SLICE_T__) = slc_extend((__SLICE_T__), 1); \
-    slcilast(__SLICE_T__, __TYPE__) = (__ITEM__); \
+    slc_last(__SLICE_T__, __TYPE__) = (__ITEM__); \
 }
 
 /**
@@ -443,7 +443,7 @@ void print_slice_info(const char* info, const slice_t* slice) {
 void print_slice_ints(const char* info, const slice_t* slice) {
     print_slice_info(info, slice);
     for (int i = 0; i < slice->l;) {
-        printf("%i, ", slci(slice, int, i++));
+        printf("%i, ", slc_at(slice, int, i++));
     }
     printf("\r\n");
 }
@@ -474,7 +474,7 @@ int main() {
     print_slice_ints("New empty slice_t* with length 9 and extra cap 2", slice_ints_new);
     for (int i = 0; i < slice_ints_new->l; i++) {
         // ((int*) slice_ints_new->p)[i] = ((int*) slice_ints.p)[i];
-        slci(slice_ints_new, int, i) = -slci(&slice_ints, int, i);
+        slc_at(slice_ints_new, int, i) = -slc_at(&slice_ints, int, i);
     }
     print_slice_ints("slice_t* after data copy with sign inversion", slice_ints_new);
 
@@ -482,7 +482,7 @@ int main() {
     print_slice_ints("slice_t* after slice append", slice_ints_new);
 
     // slice_ints_new = slc_extend(slice_ints_new, 1);
-    // slcilast(slice_ints_new, int) = 55;
+    // slc_last(slice_ints_new, int) = 55;
     slc_append(slice_ints_new, int, 55);
     print_slice_ints("slice_t* after append 55", slice_ints_new);
 
