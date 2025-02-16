@@ -13,8 +13,9 @@ void print_slice_info(const char* info, const slice_t* slice) {
 
 void print_slice_ints(const char* info, const slice_t* slice) {
     print_slice_info(info, slice);
-    for (int i = 0; i < slice->l;) {
-        printf("%i, ", slc_at(slice, int, i++));
+    int* ptr = slc_begin(slice, int);
+    while (ptr != slc_end(slice, int)) {
+        printf("%i, ", *ptr++);
     }
     printf("\r\n");
 }
@@ -44,7 +45,7 @@ int main() {
     slice_t* slice_ints_new = slc_new(sizeof (int), slice_ints.l, 2);
     print_slice_ints("New empty slice_t* with length 9 and extra cap 2", slice_ints_new);
     for (int i = 0; i < slice_ints_new->l; i++) {
-        // ((int*) slice_ints_new->p)[i] = ((int*) slice_ints.p)[i];
+        // ((int*) slice_ints_new->d)[i] = ((int*) slice_ints.d)[i];
         slc_at(slice_ints_new, int, i) = -slc_at(&slice_ints, int, i);
     }
     print_slice_ints("slice_t* after data copy with sign inversion", slice_ints_new);

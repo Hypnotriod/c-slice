@@ -28,7 +28,7 @@ print_slice_ints("New slice_t* from slice of slice_t* with extra cap 10", slice_
 slice_t* slice_ints_new = slc_new(sizeof (int), slice_ints.l, 2);
 print_slice_ints("New empty slice_t* with length 9 and extra cap 2", slice_ints_new);
 for (int i = 0; i < slice_ints_new->l; i++) {
-    // ((int*) slice_ints_new->p)[i] = ((int*) slice_ints.p)[i];
+    // ((int*) slice_ints_new->d)[i] = ((int*) slice_ints.d)[i];
     slc_at(slice_ints_new, int, i) = -slc_at(&slice_ints, int, i);
 }
 print_slice_ints("slice_t* after data copy with sign inversion", slice_ints_new);

@@ -15,8 +15,8 @@
  * The main slice structure
  */
 typedef struct {
-    // Slice data pointer
-    const void* p;
+    // Data array pointer
+    const void* d;
     // Slice length
     const int l;
     // Slice capacity
@@ -31,7 +31,7 @@ typedef struct {
  * Flexible array members based slice structure
  */
 typedef struct {
-    void* p;
+    void* d;
     int l;
     int c;
     int s;
@@ -48,7 +48,7 @@ typedef struct {
     .l = __arr_size(__ARR__), \
     .c = __arr_size(__ARR__), \
     .s = __arr_type_size(__ARR__), \
-    .p = (__ARR__), \
+    .d = (__ARR__), \
     .is_final = true \
 }
 
@@ -66,6 +66,15 @@ typedef struct {
 
 // Unwrap slice_t* and get the typed last item
 #define slc_last(__SLICE_T__, __TYPE__) (*(__TYPE__**)((__SLICE_T__)))[(__SLICE_T__)->l - 1]
+
+// Unwrap slice_t* and get  a pointer to the typed last item
+#define slc_last_ptr(__SLICE_T__, __TYPE__) (*(__TYPE__**)((__SLICE_T__)))[(__SLICE_T__)->l - 1]
+
+// Unwrap slice_t* and get a pointer to the typed first item
+#define slc_begin(__SLICE_T__, __TYPE__) *(__TYPE__**)((__SLICE_T__))
+
+// Unwrap slice_t* and get a pointer to the next after the typed last item
+#define slc_end(__SLICE_T__, __TYPE__) &(*(__TYPE__**)((__SLICE_T__)))[(__SLICE_T__)->l]
 
 // Dynamic slice_t* helper macro to free and set a null pointer
 #define slc_free(__SLICE_T__) { free((__SLICE_T__)); (__SLICE_T__) = NULL; }
@@ -86,7 +95,7 @@ slice_t* slc_new(int type_size, int len, int cap) {
     slice->l = len;
     slice->c = len + cap;
     slice->s = type_size;
-    slice->p = slice->data;
+    slice->d = slice->data;
     slice->is_final = false;
     memset(slice->data, 0, (len + cap) * type_size);
     return (slice_t*) slice;
@@ -109,7 +118,7 @@ slice_t* slc_new_from(int type_size, const void* data, int len, int cap) {
     slice->l = len;
     slice->c = len + cap;
     slice->s = type_size;
-    slice->p = slice->data;
+    slice->d = slice->data;
     slice->is_final = false;
     memcpy(slice->data, data, len * type_size);
     memset((void*) slice->data + (len * type_size), 0, cap * type_size);
@@ -125,7 +134,7 @@ slice_t* slc_new_from(int type_size, const void* data, int len, int cap) {
  * @return new slice_t*
  */
 slice_t* slc_new_from_slice(const slice_t* slice, int cap) {
-    return slc_new_from(slice->s, slice->p, slice->l, cap);
+    return slc_new_from(slice->s, slice->d, slice->l, cap);
 }
 
 /**
@@ -157,7 +166,7 @@ const slice_t slc_slice(const slice_t* slice, int start, int len) {
     else if (start < 0) start = slice->l + start;
     if (len < 0 || start + len > slice->l) len = slice->l - start;
     const slice_t newslice = {
-        .p = slice->p + start * slice->s,
+        .d = slice->d + start * slice->s,
         .l = len,
         .c = len,
         .s = slice->s,
@@ -177,7 +186,7 @@ const slice_t slc_slice(const slice_t* slice, int start, int len) {
  */
 const slice_t slc_slice_of(int type_size, const void* data, int start, int len) {
     const slice_t newslice = {
-        .p = (void*) data + start * type_size,
+        .d = (void*) data + start * type_size,
         .l = len,
         .c = len,
         .s = type_size,
@@ -211,7 +220,7 @@ const slice_t slc_slice_of(int type_size, const void* data, int start, int len) 
  */
 slice_t* slc_slice_new(const slice_t* slice, int start, int len) {
     const slice_t newslice = slc_slice(slice, start, len);
-    return slc_new_from(newslice.s, newslice.p, newslice.l, newslice.l);
+    return slc_new_from(newslice.s, newslice.d, newslice.l, newslice.l);
 }
 
 /**
@@ -226,20 +235,20 @@ slice_t* slc_slice_new(const slice_t* slice, int start, int len) {
  */
 slice_t* slc_append_slice(slice_t* to, const slice_t* what) {
     if (to->l + what->l <= to->c) {
-        memcpy(((void*) to->p + to->l * to->s), what->p, what->l * what->s);
+        memcpy(((void*) to->d + to->l * to->s), what->d, what->l * what->s);
         ((__slice_fam_t*) to)->l += what->l;
         return to;
     }
     int cap = (to->l + what->l) * 2;
     __slice_fam_t* slice = __slice_fam_malloc(cap, to->s);
     if (slice == NULL) return NULL;
-    memcpy(slice->data, to->p, to->l * to->s);
-    memcpy((void*) slice->data + to->l * to->s, what->p, what->l * what->s);
+    memcpy(slice->data, to->d, to->l * to->s);
+    memcpy((void*) slice->data + to->l * to->s, what->d, what->l * what->s);
     memset((void*) slice->data + (to->l + what->l) * to->s, 0, cap / 2 * to->s);
     slice->l = to->l + what->l;
     slice->c = cap;
     slice->s = to->s;
-    slice->p = slice->data;
+    slice->d = slice->data;
     slice->is_final = false;
     if (!to->is_final) slc_free(to);
     return (slice_t*) slice;
@@ -280,20 +289,20 @@ slice_t* slc_append_slice_n(slice_t* to, int n, ...) {
  */
 slice_t* slc_append_arr(slice_t* to, const void* what, int len) {
     if (to->l + len <= to->c) {
-        memcpy(((void*) to->p + to->l * to->s), what, len * to->s);
+        memcpy(((void*) to->d + to->l * to->s), what, len * to->s);
         ((__slice_fam_t*) to)->l += len;
         return to;
     }
     int cap = (to->l + len) * 2;
     __slice_fam_t* slice = __slice_fam_malloc(cap, to->s);
     if (slice == NULL) return NULL;
-    memcpy(slice->data, to->p, to->l * to->s);
+    memcpy(slice->data, to->d, to->l * to->s);
     memcpy((void*) slice->data + to->l * to->s, what, len * to->s);
     memset((void*) slice->data + (to->l + len) * to->s, 0, cap / 2 * to->s);
     slice->l = to->l + len;
     slice->c = cap;
     slice->s = to->s;
-    slice->p = slice->data;
+    slice->d = slice->data;
     slice->is_final = false;
     if (!to->is_final) slc_free(to);
     return (slice_t*) slice;
@@ -309,13 +318,13 @@ slice_t* slc_concat(const slice_t* slice1, const slice_t* slice2) {
     int cap = (slice1->l + slice2->l) * 2;
     __slice_fam_t* slice = __slice_fam_malloc(cap, slice1->s);
     if (slice == NULL) return NULL;
-    memcpy(slice->data, slice1->p, slice1->l * slice1->s);
-    memcpy((void*) slice->data + slice1->l * slice1->s, slice2->p, slice2->l * slice2->s);
+    memcpy(slice->data, slice1->d, slice1->l * slice1->s);
+    memcpy((void*) slice->data + slice1->l * slice1->s, slice2->d, slice2->l * slice2->s);
     memset((void*) slice->data + (slice1->l + slice2->l) * slice1->s, 0, cap / 2 * slice1->s);
     slice->l = slice1->l + slice2->l;
     slice->c = cap;
     slice->s = slice1->s;
-    slice->p = slice->data;
+    slice->d = slice->data;
     slice->is_final = false;
     return (slice_t*) slice;
 }
@@ -344,7 +353,7 @@ slice_t* slc_concat_n(int n, ...) {
     void* data = slice->data;
     for (int i = 0; i < n; i++) {
         const slice_t* slc = va_arg(args, const slice_t*);
-        memcpy(data, slc->p, slc->l * slc->s);
+        memcpy(data, slc->d, slc->l * slc->s);
         data += slc->l * slc->s;
     }
     memset(data, 0, cap / 2 * type_size);
@@ -352,7 +361,7 @@ slice_t* slc_concat_n(int n, ...) {
     slice->l = len;
     slice->c = cap;
     slice->s = type_size;
-    slice->p = slice->data;
+    slice->d = slice->data;
     slice->is_final = false;
     return (slice_t*) slice;
 }
@@ -374,12 +383,12 @@ slice_t* slc_extend(slice_t* slice, int count) {
     int cap = (slice->l + count) * 2;
     __slice_fam_t* newslc = __slice_fam_malloc(cap, slice->s);
     if (slice == NULL) return NULL;
-    memcpy(newslc->data, slice->p, slice->l * slice->s);
+    memcpy(newslc->data, slice->d, slice->l * slice->s);
     memset((void*) newslc->data + slice->l * slice->s, 0, (cap - slice->l) * slice->s);
     newslc->l = slice->l + count;
     newslc->c = cap;
     newslc->s = slice->s;
-    newslc->p = newslc->data;
+    newslc->d = newslc->data;
     newslc->is_final = false;
     if (!slice->is_final) slc_free(slice);
     return (slice_t*) newslc;
@@ -419,7 +428,7 @@ void slc_shrink(slice_t* slice, int count) {
 void slc_extract(slice_t* slice, void* buff, int count) {
     if (count <= 0) return;
     if (count > slice->l) count = slice->l;
-    memcpy(buff, slice->p, slice->l * slice->s);
+    memcpy(buff, slice->d, slice->l * slice->s);
 }
 
 /**
@@ -428,7 +437,7 @@ void slc_extract(slice_t* slice, void* buff, int count) {
  * @param buff - void* to extract data to
  */
 void slc_extract_all(slice_t* slice, void* buff) {
-    memcpy(buff, slice->p, slice->l * slice->s);
+    memcpy(buff, slice->d, slice->l * slice->s);
 }
 
 #endif /* C99_SLICE_H */
