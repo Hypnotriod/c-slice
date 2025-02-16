@@ -68,7 +68,7 @@ typedef struct {
 #define slc_last(__SLICE_T__, __TYPE__) (*(__TYPE__**)((__SLICE_T__)))[(__SLICE_T__)->l - 1]
 
 // Unwrap slice_t* and get  a pointer to the typed last item
-#define slc_last_ptr(__SLICE_T__, __TYPE__) (*(__TYPE__**)((__SLICE_T__)))[(__SLICE_T__)->l - 1]
+#define slc_last_ptr(__SLICE_T__, __TYPE__) &(*(__TYPE__**)((__SLICE_T__)))[(__SLICE_T__)->l - 1]
 
 // Unwrap slice_t* and get a pointer to the typed first item
 #define slc_begin(__SLICE_T__, __TYPE__) *(__TYPE__**)((__SLICE_T__))
