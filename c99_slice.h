@@ -278,7 +278,7 @@ slice_t* slc_append_slice_n(slice_t* to, int n, ...) {
 
 /**
  * Append void* array 'what' to the slice_t* 'to'
- * Will copy all the data of the given slice_t* slices to the slice_t* 'to'
+ * Will copy the 'len' items from the given array to the slice_t* 'to'
  * Will reallocate the memory and free the old pointer if growth occurs
  * Fill rest with zero
  * Always reassign the slice_t* result to avoid use after free
