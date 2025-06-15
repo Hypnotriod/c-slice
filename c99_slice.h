@@ -76,6 +76,11 @@ typedef struct {
 // Unwrap slice_t* and get a pointer to the next after the typed last item
 #define slc_end(__SLICE_T__, __TYPE__) &(*(__TYPE__**)((__SLICE_T__)))[(__SLICE_T__)->l]
 
+// For each slice_t* macro helper
+// @example: slc_for_each(slice, int, item) { printf("%i, ", *item); }
+#define slc_for_each(__SLICE_T__, __TYPE__, __PTR__) \
+    for (__TYPE__* __PTR__ = slc_begin(__SLICE_T__, __TYPE__); __PTR__ < slc_end(slice, __TYPE__); ++__PTR__)
+
 // Dynamic slice_t* helper macro to free and set a null pointer
 #define slc_free(__SLICE_T__) { free((__SLICE_T__)); (__SLICE_T__) = NULL; }
 

@@ -13,9 +13,8 @@ void print_slice_info(const char* info, const slice_t* slice) {
 
 void print_slice_ints(const char* info, const slice_t* slice) {
     print_slice_info(info, slice);
-    int* ptr = slc_begin(slice, int);
-    while (ptr != slc_end(slice, int)) {
-        printf("%i, ", *ptr++);
+    slc_for_each(slice, int, item) {
+        printf("%i, ", *item);
     }
     printf("\r\n");
 }
