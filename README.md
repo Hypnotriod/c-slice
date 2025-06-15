@@ -85,6 +85,18 @@ slice = slc_append_arr(slice, ints, slc_arr_size(ints));
 slc_append(slice, int, 55);
 ```
 
+* Append the struct item to the slice
+```c
+typedef struct {
+    int a;
+    int b;
+} foo_t;
+
+slice_t* foos = slc_new(sizeof (foo_t), 0, 5);
+slc_append(foos, foo_t, ((foo_t){.a = 100, .b = 200}));
+slc_append(foos, foo_t, ((foo_t){.a = 300, .b = 400}));
+```
+
 * Append the slice `slice_b` to the slice `slice_a`
 ```c
 slice_t* slice_a = ... , slice_b = ... ;

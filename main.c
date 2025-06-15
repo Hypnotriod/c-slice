@@ -19,6 +19,11 @@ void print_slice_ints(const char* info, const slice_t* slice) {
     printf("\r\n");
 }
 
+typedef struct {
+    int a;
+    int b;
+} foo_t;
+
 int main() {
     int ints[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
@@ -88,6 +93,20 @@ int main() {
     slc_free(slice_ints_new_from);
     slc_free(slice_ints_new);
     slc_free(slice_concatenated);
+
+    slice_t* foos = slc_new(sizeof (foo_t), 10, 5);
+    int n = 0;
+    slc_for_each(foos, foo_t, foo) {
+        foo->a = n++;
+        foo->b = n++;
+    }
+    slc_append(foos, foo_t, ((foo_t){.a = 100, .b = 200}));
+    slc_append(foos, foo_t, ((foo_t){.a = 300, .b = 400}));
+    print_slice_info("foos", foos);
+    slc_for_each(foos, foo_t, foo) {
+        printf("foo: {a: %i, b: %i}, ", foo->a, foo->b);
+    }
+    slc_free(foos);
 
     return (EXIT_SUCCESS);
 }
