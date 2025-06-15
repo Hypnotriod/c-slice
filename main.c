@@ -34,7 +34,7 @@ int main() {
     slc_shrink(slice_ints_new_from, 2);
     print_slice_ints("slice_t* after shrink by 2", slice_ints_new_from);
 
-    slice_ints_new_from = slc_append_arr(slice_ints_new_from, ints, __arr_size(ints));
+    slice_ints_new_from = slc_append_arr(slice_ints_new_from, ints, slc_arr_size(ints));
     print_slice_ints("slice_t* after array append", slice_ints_new_from);
 
     slc_free(slice_ints_new_from);

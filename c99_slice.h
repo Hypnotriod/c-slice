@@ -39,15 +39,17 @@ typedef struct {
     void* data[];
 } __slice_fam_t;
 
-// Array manipulation helpers macro
-#define __arr_type_size(__ARR__) (sizeof((__ARR__)[0]))
-#define __arr_size(__ARR__) (sizeof((__ARR__)) / __arr_type_size(__ARR__))
+// Array type size helper macro
+#define slc_arr_type_size(__ARR__) (sizeof((__ARR__)[0]))
+
+// Array size helper macro
+#define slc_arr_size(__ARR__) (sizeof((__ARR__)) / slc_arr_type_size(__ARR__))
 
 // Final slice_t initialization macro from array
 #define slc_from_arr(__ARR__) { \
-    .l = __arr_size(__ARR__), \
-    .c = __arr_size(__ARR__), \
-    .s = __arr_type_size(__ARR__), \
+    .l = slc_arr_size(__ARR__), \
+    .c = slc_arr_size(__ARR__), \
+    .s = slc_arr_type_size(__ARR__), \
     .d = (__ARR__), \
     .is_final = true \
 }
@@ -152,9 +154,9 @@ slice_t* slc_new_from_slice(const slice_t* slice, int cap) {
  * @return new slice_t*
  */
 #define slc_new_from_arr(__ARR__, __CAP__) slc_new_from( \
-    __arr_type_size((__ARR__)), \
+    slc_arr_type_size((__ARR__)), \
     (__ARR__), \
-    __arr_size((__ARR__)), \
+    slc_arr_size((__ARR__)), \
     (__CAP__) \
 )
 
@@ -210,7 +212,7 @@ const slice_t slc_slice_of(int type_size, const void* data, int start, int len) 
  * @return final slice_t
  */
 #define slc_slice_arr(__ARR__, __START__, __LEN__) slc_slice_of( \
-    __arr_type_size((__ARR__)), \
+    slc_arr_type_size((__ARR__)), \
     (__ARR__), \
     (__START__), \
     (__LEN__) \
