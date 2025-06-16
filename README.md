@@ -113,7 +113,7 @@ slice_a = slc_append_slice_n(slice_a, 3, slice_b, slice_c, slice_d);
 slice_t* slice = slc_concat(slice_a, slice_b);
 ```
 
-* Concat `n` slices into the new slice
+* Concat the `n` slices into a new slice
 ```c
 slice_t* slice = slc_concat_n(3, slice_a, slice_b, slice_c);
 ```
@@ -127,7 +127,35 @@ const slice_t b = slc_slice(slice, 5, -1); // {5, 6, 7, 8, 9}
 const slice_t c = slc_slice(slice, 5, -3); // {5, 6, 7}
 ```
 
-* For each macro
+* Access a value by the index
+```c
+typedef struct {
+    int a;
+    int b;
+} foo_t;
+
+slice_t* foos = slc_new(sizeof (foo_t), 2, 0);
+slc_at(foos, foo_t, 0).a = 1;
+slc_at(foos, foo_t, 0).b = 2;
+slc_last(foos, foo_t).a = 3;
+slc_last(foos, foo_t).b = 4;
+```
+
+* Classic for loop
+```c
+for (int i = 0; i < slice->l; ++i) {
+    printf("%i, ", slc_at(slice, int, i));
+}
+```
+
+* Iterate over the slice
+```c
+for (int* item = slc_begin(slice, int); item < slc_end(slice, int); ++item) {
+    printf("%i, ", *item);
+}
+```
+
+* Iterate over the slice using the `for each` macro
 ```c
 slc_for_each(slice, int, item) {
     printf("%i, ", *item);
