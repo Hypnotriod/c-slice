@@ -94,19 +94,27 @@ int main() {
     slc_free(slice_ints_new);
     slc_free(slice_concatenated);
 
-    slice_t* foos = slc_new(sizeof (foo_t), 10, 5);
+    slice_t* foos_new = slc_new(sizeof (foo_t), 10, 5);
     int n = 0;
-    slc_for_each(foos, foo_t, foo) {
+    slc_for_each(foos_new, foo_t, foo) {
         foo->a = n++;
         foo->b = n++;
     }
-    slc_append(foos, foo_t, ((foo_t){.a = 100, .b = 200}));
-    slc_append(foos, foo_t, ((foo_t){.a = 300, .b = 400}));
-    print_slice_info("foos", foos);
-    slc_for_each(foos, foo_t, foo) {
-        printf("foo: {a: %i, b: %i}, ", foo->a, foo->b);
+    slc_append(foos_new, foo_t, ((foo_t){.a = 100, .b = 200}));
+    slc_append(foos_new, foo_t, ((foo_t){.a = 300, .b = 400}));
+    print_slice_info("foos on heap", foos_new);
+    slc_for_each(foos_new, foo_t, foo) {
+        printf("{a: %i, b: %i}, ", foo->a, foo->b);
     }
-    slc_free(foos);
+    printf("\r\n");
+    slc_free(foos_new);
 
+    const slice_t foos = slc_reserve(foo_t, 5);
+    slc_last(&foos, foo_t).a = 111;
+    slc_last(&foos, foo_t).b = 222;
+    print_slice_info("foos on stack", &foos);
+    slc_for_each(&foos, foo_t, foo) {
+        printf("{a: %i, b: %i}, ", foo->a, foo->b);
+    }
     return (EXIT_SUCCESS);
 }

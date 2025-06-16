@@ -54,6 +54,9 @@ typedef struct {
     .is_final = true \
 }
 
+// Initialize slice_t on the stack with the given length
+#define slc_reserve(__TYPE__, __LEN__) slc_from_arr((__TYPE__[__LEN__]){0});
+
 // __string_fam_t* memory allocation macro helper
 #define __slice_fam_malloc(__LEN__, __SIZE__) malloc(sizeof (__slice_fam_t) + (__LEN__) * (__SIZE__))
 
